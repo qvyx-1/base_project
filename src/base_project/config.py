@@ -10,7 +10,6 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
-from typing import Any
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -107,9 +106,7 @@ def get_logger(name: str, level: str = "INFO") -> logging.Logger:
 
     if not logger.handlers:
         handler = logging.StreamHandler()
-        formatter = logging.Formatter(
-            "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-        )
+        formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
         handler.setFormatter(formatter)
         logger.addHandler(handler)
 
