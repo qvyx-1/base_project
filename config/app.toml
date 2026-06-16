@@ -1,0 +1,15 @@
+# Base Project Configuration
+# This file is loaded via pydantic-settings when --config is specified
+
+[app]
+app_name = "My Application"
+version = "0.1.0"
+debug = false
+log_level = "INFO"
+
+[database]
+url = "sqlite:///./app.db"
+
+[server]
+host = "127.0.0.1"
+port = 8000
