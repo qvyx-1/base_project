@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NeoPulse Controller</title>
+<link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<div class="app">
+  <header>
+    <h1>🎨 NeoPulse</h1>
+    <div class="status-bar">
+      <span id="wifi-status">WiFi: --</span>
+      <span id="play-status">Status: Idle</span>
+      <span id="pixel-count">Pixels: 64</span>
+    </div>
+  </header>
+
+  <main>
+    <!-- Pixel Preview -->
+    <section class="preview-section">
+      <h2>Preview</h2>
+      <div id="pixel-preview" class="pixel-preview"></div>
+      <div class="brightness-control">
+        <label>Brightness: <span id="brightness-val">100</span>%</label>
+        <input type="range" id="brightness-slider" min="0" max="100" value="100">
+      </div>
+    </section>
+
+    <!-- Scene Editor -->
+    <section class="editor-section">
+      <h2>Show Editor</h2>
+      
+      <div class="editor-toolbar">
+        <button id="btn-new-scene">+ New Scene</button>
+        <button id="btn-add-keyframe">+ Keyframe</button>
+        <select id="scene-select"><option>No scene selected</option></select>
+        <select id="effect-select">
+          <option value="">-- Add Effect --</option>
+          <option value="strobe">Strobe</option>
+          <option value="fire">Fire</option>
+          <option value="emergency_us">Emergency (US)</option>
+          <option value="emergency_de">Blaulicht (DE)</option>
+          <option value="rainbow">Rainbow</option>
+          <option value="breathing">Breathing</option>
+        </select>
+        <button id="btn-play">▶ Play</button>
+        <button id="btn-stop">⏹ Stop</button>
+      </div>
+
+      <!-- Keyframe Timeline -->
+      <div class="timeline-container">
+        <canvas id="timeline-canvas" width="800" height="120"></canvas>
+      </div>
+
+      <!-- Color Picker -->
+      <div class="color-section">
+        <h3>Color</h3>
+        <input type="color" id="color-picker" value="#ff0000">
+        <div class="rgb-sliders">
+          <label>R: <input type="range" id="r-slider" min="0" max="255" value="255"></label>
+          <label>G: <input type="range" id="g-slider" min="0" max="255" value="0"></label>
+          <label>B: <input type="range" id="b-slider" min="0" max="255" value="0"></label>
+        </div>
+      </div>
+
+      <!-- Keyframe List -->
+      <div class="keyframe-list" id="keyframe-list">
+        <h3>Keyframes</h3>
+        <ul id="keyframe-ul"></ul>
+      </div>
+    </section>
+
+    <!-- Saved Shows -->
+    <section class="shows-section">
+      <h2>Saved Shows</h2>
+      <div id="shows-list" class="shows-list"></div>
+    </section>
+
+    <!-- Effect Parameters -->
+    <section class="params-section" id="params-section" style="display:none;">
+      <h3>Effect Parameters</h3>
+      <div id="params-container"></div>
+    </section>
+  </main>
+
+  <footer>
+    <span id="esp-info">ESP32-S3 | MicroPython NeoPulse</span>
+  </footer>
+</div>
+
+<script src="/js/app.js"></script>
+<script src="/js/timeline.js"></script>
+</body>
+</html>

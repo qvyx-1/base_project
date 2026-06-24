@@ -1,0 +1,1253 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NeoPulse Emulator — NeoPixel Simulator</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: #0a0a1a;
+    color: #e0e0e0;
+    min-height: 100vh;
+  }
+
+  .app { max-width: 1400px; margin: 0 auto; padding: 16px; }
+
+  header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 20px;
+    background: #12122a;
+    border-radius: 12px;
+    margin-bottom: 16px;
+  }
+
+  header h1 { font-size: 1.5em; color: #7c6ff5; }
+
+  .status-bar span {
+    margin-left: 16px;
+    font-size: 0.85em;
+    padding: 4px 10px;
+    background: #1a1a3e;
+    border-radius: 6px;
+  }
+
+  .main-layout {
+    display: grid;
+    grid-template-columns: 280px 1fr 300px;
+    gap: 16px;
+  }
+
+  /* Left Panel */
+  .left-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .panel-card {
+    background: #12122a;
+    border-radius: 12px;
+    padding: 16px;
+  }
+
+  .panel-card h3 {
+    font-size: 0.95em;
+    color: #888;
+    margin-bottom: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  /* Pixel Preview */
+  .pixel-preview-large {
+    display: flex;
+    gap: 2px;
+    padding: 12px;
+    background: #0a0a14;
+    border-radius: 8px;
+    min-height: 60px;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .pixel-preview-large .pixel {
+    width: 20px;
+    height: 20px;
+    border-radius: 3px;
+    background: #000;
+    transition: background-color 0.05s;
+  }
+
+  /* Zone Controls */
+  .zone-control {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px;
+    background: #1a1a3e;
+    border-radius: 6px;
+    margin-bottom: 8px;
+  }
+
+  .zone-control input[type="range"] {
+    flex: 1;
+    accent-color: #7c6ff5;
+  }
+
+  .zone-control label {
+    font-size: 0.8em;
+    min-width: 60px;
+  }
+
+  /* Timeline */
+  .timeline-container {
+    background: #0a0a14;
+    border-radius: 8px;
+    padding: 8px;
+    margin-bottom: 12px;
+  }
+
+  #timeline-canvas {
+    width: 100%;
+    height: 150px;
+    display: block;
+  }
+
+  /* Buttons */
+  .btn {
+    padding: 8px 14px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.85em;
+    transition: background 0.2s;
+    color: white;
+  }
+
+  .btn-primary { background: #7c6ff5; }
+  .btn-primary:hover { background: #6a5be0; }
+
+  .btn-success { background: #4caf50; }
+  .btn-success:hover { background: #3d9142; }
+
+  .btn-danger { background: #f44336; }
+  .btn-danger:hover { background: #d32f2c; }
+
+  .btn-secondary { background: #555; }
+  .btn-secondary:hover { background: #666; }
+
+  .btn-group {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+
+  /* Scene List */
+  .scene-item {
+    padding: 10px;
+    background: #1a1a3e;
+    border-radius: 6px;
+    margin-bottom: 8px;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+
+  .scene-item:hover { background: #252550; }
+  .scene-item.active { border-left: 3px solid #7c6ff5; }
+
+  .scene-item .name { font-weight: bold; font-size: 0.9em; }
+  .scene-item .meta { font-size: 0.75em; color: #888; margin-top: 4px; }
+
+  /* Effect List */
+  .effect-item {
+    padding: 10px;
+    background: #1a1a3e;
+    border-radius: 6px;
+    margin-bottom: 6px;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+
+  .effect-item:hover { background: #252550; }
+  .effect-item.active { border-left: 3px solid #7c6ff5; }
+
+  .effect-item .name { font-weight: bold; font-size: 0.85em; }
+  .effect-item .desc { font-size: 0.7em; color: #888; margin-top: 2px; }
+
+  /* Right Panel */
+  .right-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  /* Color Picker */
+  .color-picker-main {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    margin-bottom: 12px;
+  }
+
+  #emulator-color-picker {
+    width: 80px;
+    height: 50px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+  }
+
+  .rgb-sliders {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    flex: 1;
+  }
+
+  .rgb-sliders label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.85em;
+  }
+
+  .rgb-sliders input[type="range"] {
+    flex: 1;
+    accent-color: #7c6ff5;
+  }
+
+  /* Effect Params */
+  .param-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px;
+    background: #1a1a3e;
+    border-radius: 6px;
+    margin-bottom: 8px;
+  }
+
+  .param-row label {
+    font-size: 0.8em;
+    min-width: 80px;
+  }
+
+  .param-row input[type="range"] {
+    flex: 1;
+    accent-color: #7c6ff5;
+  }
+
+  .param-row .value {
+    font-size: 0.75em;
+    min-width: 40px;
+    text-align: right;
+    color: #aaa;
+  }
+
+  /* Keyframe List */
+  .keyframe-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+    background: #1a1a3e;
+    border-radius: 6px;
+    font-size: 0.8em;
+    margin-bottom: 4px;
+  }
+
+  .keyframe-item .color-swatch {
+    width: 16px;
+    height: 16px;
+    border-radius: 3px;
+    border: 1px solid #333;
+  }
+
+  /* Shows List */
+  .show-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    background: #1a1a3e;
+    border-radius: 6px;
+    margin-bottom: 6px;
+  }
+
+  .show-item .name { font-weight: bold; font-size: 0.85em; }
+
+  .show-item button {
+    background: none;
+    border: none;
+    color: #aaa;
+    cursor: pointer;
+    font-size: 1em;
+    padding: 2px 6px;
+  }
+
+  .show-item button:hover { color: white; }
+
+  /* Config */
+  .config-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+
+  .config-row label {
+    font-size: 0.8em;
+    min-width: 70px;
+  }
+
+  .config-row input, .config-row select {
+    flex: 1;
+    padding: 6px;
+    background: #1a1a3e;
+    border: 1px solid #2a2a4e;
+    border-radius: 4px;
+    color: #e0e0e0;
+    font-size: 0.8em;
+  }
+
+  footer {
+    text-align: center;
+    padding: 16px;
+    margin-top: 16px;
+    color: #555;
+    font-size: 0.8em;
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <h1>🎨 NeoPulse Emulator</h1>
+    <div class="status-bar">
+      <span id="sim-status">● Simuliert</span>
+      <span id="pixel-count">Pixels: 64</span>
+      <span id="fps-counter">FPS: 0</span>
+    </div>
+  </header>
+
+  <div class="main-layout">
+    <!-- Left Panel -->
+    <div class="left-panel">
+      <!-- Pixel Preview -->
+      <div class="panel-card">
+        <h3>LED-Vorschau</h3>
+        <div id="pixel-preview-large" class="pixel-preview-large"></div>
+      </div>
+
+      <!-- Zone Controls -->
+      <div class="panel-card">
+        <h3>Zonen</h3>
+        <div id="zone-controls"></div>
+        <button class="btn btn-secondary" style="width:100%;margin-top:8px;" onclick="emulator.addZone()">+ Zone hinzufügen</button>
+      </div>
+
+      <!-- Scenes -->
+      <div class="panel-card">
+        <h3>Szenen</h3>
+        <div id="scene-list"></div>
+        <button class="btn btn-secondary" style="width:100%;margin-top:8px;" onclick="emulator.addScene()">+ Szene erstellen</button>
+      </div>
+
+      <!-- Effects -->
+      <div class="panel-card">
+        <h3>Effekte</h3>
+        <div id="effect-list"></div>
+      </div>
+    </div>
+
+    <!-- Center Panel -->
+    <div class="center-panel">
+      <!-- Timeline -->
+      <div class="panel-card">
+        <h3>Timeline-Editor</h3>
+        <div class="btn-group">
+          <button class="btn btn-success" onclick="emulator.play()">▶ Abspielen</button>
+          <button class="btn btn-danger" onclick="emulator.stop()">⏹ Stop</button>
+          <button class="btn btn-primary" onclick="emulator.addKeyframe()">+ Keyframe</button>
+          <button class="btn btn-secondary" onclick="emulator.saveShow()">💾 Speichern</button>
+        </div>
+        <div class="timeline-container">
+          <canvas id="timeline-canvas" width="800" height="150"></canvas>
+        </div>
+
+        <!-- Keyframe List -->
+        <div id="keyframe-list"></div>
+      </div>
+
+      <!-- Shows -->
+      <div class="panel-card">
+        <h3>Gespeicherte Shows</h3>
+        <div id="shows-list"></div>
+      </div>
+    </div>
+
+    <!-- Right Panel -->
+    <div class="right-panel">
+      <!-- Color Picker -->
+      <div class="panel-card">
+        <h3>Farbe</h3>
+        <div class="color-picker-main">
+          <input type="color" id="emulator-color-picker" value="#ff0000">
+          <div class="rgb-sliders">
+            <label>R: <input type="range" id="r-slider" min="0" max="255" value="255"></label>
+            <label>G: <input type="range" id="g-slider" min="0" max="255" value="0"></label>
+            <label>B: <input type="range" id="b-slider" min="0" max="255" value="0"></label>
+          </div>
+        </div>
+      </div>
+
+      <!-- Effect Parameters -->
+      <div class="panel-card" id="effect-params-panel" style="display:none;">
+        <h3>Effekt-Parameter</h3>
+        <div id="effect-params"></div>
+      </div>
+
+      <!-- Settings -->
+      <div class="panel-card">
+        <h3>Einstellungen</h3>
+        <div class="config-row">
+          <label>Pixels:</label>
+          <input type="number" id="num-pixels-input" value="64" min="1" max="256" onchange="emulator.setNumPixels(this.value)">
+        </div>
+        <div class="config-row">
+          <label>Helligkeit:</label>
+          <input type="range" id="brightness-slider" min="0" max="100" value="100" oninput="emulator.setBrightness(this.value)">
+        </div>
+        <div class="config-row">
+          <label>Interp.:</label>
+          <select id="interp-select" onchange="emulator.setInterpolation(this.value)">
+            <option value="linear">Linear</option>
+            <option value="sine">Sinus</option>
+            <option value="step">Stufe</option>
+            <option value="ease_in_out">Ease In/Out</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Zone Colors -->
+      <div class="panel-card" id="zone-colors-panel">
+        <h3>Zonen-Farben</h3>
+        <div id="zone-colors"></div>
+      </div>
+    </div>
+  </div>
+
+  <footer>NeoPulse Emulator — Simuliert ESP32 NeoPixel Effekte im Browser | MicroPython WS2812/NeoPixel</footer>
+</div>
+
+<script>
+// ============================================
+// NeoPulse Emulator - Complete Simulation Engine
+// ============================================
+
+class NeoPulseEmulator {
+  constructor() {
+    this.numPixels = 64;
+    this.brightness = 100;
+    this.interpolation = 'linear';
+    this.pixels = new Array(64).fill(null).map(() => [0, 0, 0]);
+    
+    // Scenes and shows
+    this.scenes = [];
+    this.currentSceneIndex = -1;
+    this.shows = [];
+    
+    // Animation state
+    this.playing = false;
+    this.animationId = null;
+    this.startTime = 0;
+    this.elapsedTime = 0;
+    
+    // Effects
+    this.activeEffect = null;
+    this.effectParams = {};
+    this.effectStartTime = 0;
+    
+    // Zones
+    this.zones = [{ start: 0, end: 63, name: 'Zone 1' }];
+    
+    // FPS tracking
+    this.frameCount = 0;
+    this.lastFpsTime = Date.now();
+    this.currentFps = 0;
+    
+    // Canvas
+    this.timelineCanvas = document.getElementById('timeline-canvas');
+    this.timelineCtx = this.timelineCanvas.getContext('2d');
+    
+    // Initialize
+    this.initPixelPreview();
+    this.initZones();
+    this.loadShows();
+    this.renderEffectList();
+    this.bindEvents();
+    this.startRenderLoop();
+    
+    // Create default scene
+    this.addScene();
+  }
+
+  // --- Pixel Preview ---
+  
+  initPixelPreview() {
+    const container = document.getElementById('pixel-preview-large');
+    container.innerHTML = '';
+    for (let i = 0; i < this.numPixels; i++) {
+      const pixel = document.createElement('div');
+      pixel.className = 'pixel';
+      pixel.style.backgroundColor = '#000';
+      container.appendChild(pixel);
+    }
+  }
+
+  updatePixelPreview() {
+    const pixels = document.getElementById('pixel-preview-large').children;
+    for (let i = 0; i < this.numPixels && i < pixels.length; i++) {
+      const [r, g, b] = this.pixels[i];
+      pixels[i].style.backgroundColor = `rgb(${r},${g},${b})`;
+    }
+  }
+
+  // --- Zones ---
+  
+  initZones() {
+    this.renderZoneControls();
+    this.renderZoneColors();
+  }
+
+  addZone() {
+    if (this.zones.length >= 8) {
+      alert('Maximal 8 Zonen erlaubt');
+      return;
+    }
+    const lastZone = this.zones[this.zones.length - 1];
+    const start = lastZone.end + 1;
+    const end = Math.min(start + 15, this.numPixels - 1);
+    if (start > this.numPixels - 1) return;
+    
+    this.zones.push({
+      start: start,
+      end: end,
+      name: `Zone ${this.zones.length + 1}`
+    });
+    this.renderZoneControls();
+    this.renderZoneColors();
+  }
+
+  renderZoneControls() {
+    const container = document.getElementById('zone-controls');
+    container.innerHTML = '';
+    
+    this.zones.forEach((zone, idx) => {
+      const div = document.createElement('div');
+      div.className = 'zone-control';
+      div.innerHTML = `
+        <label>${zone.name}:</label>
+        <input type="range" min="${zone.start}" max="${this.numPixels - 1}" value="${zone.end}" 
+               onchange="emulator.updateZone(${idx}, this.value)">
+        <span style="font-size:0.7em;min-width:30px;">${zone.end - zone.start + 1} LEDs</span>
+      `;
+      container.appendChild(div);
+    });
+  }
+
+  updateZone(idx, value) {
+    this.zones[idx].end = parseInt(value);
+    this.renderZoneControls();
+  }
+
+  renderZoneColors() {
+    const container = document.getElementById('zone-colors');
+    container.innerHTML = '';
+    
+    this.zones.forEach((zone, idx) => {
+      const avgR = Math.round(this.pixels.slice(zone.start, zone.end + 1).reduce((s, p) => s + p[0], 0) / (zone.end - zone.start + 1));
+      const avgG = Math.round(this.pixels.slice(zone.start, zone.end + 1).reduce((s, p) => s + p[1], 0) / (zone.end - zone.start + 1));
+      const avgB = Math.round(this.pixels.slice(zone.start, zone.end + 1).reduce((s, p) => s + p[2], 0) / (zone.end - zone.start + 1));
+      
+      const div = document.createElement('div');
+      div.className = 'zone-control';
+      div.innerHTML = `
+        <label>${zone.name}:</label>
+        <div style="width:30px;height:20px;border-radius:4px;background:rgb(${avgR},${avgG},${avgB});"></div>
+        <span style="font-size:0.7em;">#${((1<<24)+(avgR<<16)+(avgG<<8)+avgB).toString(16).slice(1)}</span>
+      `;
+      container.appendChild(div);
+    });
+  }
+
+  // --- Scenes ---
+  
+  addScene() {
+    const scene = {
+      id: 'scene_' + Date.now(),
+      name: `Szene ${this.scenes.length + 1}`,
+      keyframes: [],
+      interpolation: this.interpolation,
+      loop_mode: 'single',
+      duration: 10,
+      brightness: this.brightness
+    };
+    this.scenes.push(scene);
+    this.currentSceneIndex = this.scenes.length - 1;
+    this.renderSceneList();
+    this.renderKeyframeList();
+  }
+
+  selectScene(idx) {
+    this.currentSceneIndex = idx;
+    this.renderSceneList();
+    this.renderKeyframeList();
+    this.drawTimeline();
+  }
+
+  renderSceneList() {
+    const container = document.getElementById('scene-list');
+    container.innerHTML = '';
+    
+    this.scenes.forEach((scene, idx) => {
+      const div = document.createElement('div');
+      div.className = 'scene-item' + (idx === this.currentSceneIndex ? ' active' : '');
+      div.innerHTML = `
+        <div class="name">${scene.name}</div>
+        <div class="meta">${scene.keyframes.length} Keyframes · ${scene.duration}s</div>
+      `;
+      div.onclick = () => this.selectScene(idx);
+      container.appendChild(div);
+    });
+  }
+
+  // --- Keyframes ---
+  
+  addKeyframe() {
+    if (this.scenes.length === 0) {
+      this.addScene();
+    }
+    
+    const scene = this.scenes[this.currentSceneIndex];
+    if (!scene) return;
+    
+    const color = this.getCurrentColor();
+    const time = scene.keyframes.length > 0 
+      ? scene.keyframes[scene.keyframes.length - 1].time + 2 
+      : 0;
+    
+    // Generate gradient colors for all pixels
+    const colors = [];
+    for (let i = 0; i < this.numPixels; i++) {
+      if (this.numPixels === 1) {
+        colors.push([...color]);
+      } else {
+        const t = this.numPixels > 1 ? i / (this.numPixels - 1) : 0;
+        colors.push([
+          Math.round(color[0] * t),
+          Math.round(color[1] * t),
+          Math.round(color[2] * t)
+        ]);
+      }
+    }
+    
+    scene.keyframes.push({ time, colors });
+    this.renderKeyframeList();
+    this.drawTimeline();
+  }
+
+  renderKeyframeList() {
+    const container = document.getElementById('keyframe-list');
+    container.innerHTML = '';
+    
+    if (this.currentSceneIndex < 0 || !this.scenes[this.currentSceneIndex]) return;
+    
+    const scene = this.scenes[this.currentSceneIndex];
+    scene.keyframes.forEach((kf, idx) => {
+      const div = document.createElement('div');
+      div.className = 'keyframe-item';
+      const colorHex = '#' + kf.colors[0].map(c => c.toString(16).padStart(2, '0')).join('');
+      div.innerHTML = `
+        <div class="color-swatch" style="background:${colorHex};"></div>
+        <span>t=${kf.time.toFixed(1)}s</span>
+        <button onclick="emulator.removeKeyframe(${idx})" style="background:none;border:none;color:#f44336;cursor:pointer;">✕</button>
+      `;
+      container.appendChild(div);
+    });
+  }
+
+  removeKeyframe(idx) {
+    if (this.currentSceneIndex < 0) return;
+    this.scenes[this.currentSceneIndex].keyframes.splice(idx, 1);
+    this.renderKeyframeList();
+    this.drawTimeline();
+  }
+
+  // --- Timeline Drawing ---
+  
+  drawTimeline() {
+    const ctx = this.timelineCtx;
+    if (!ctx) return;
+    
+    const w = this.timelineCanvas.width;
+    const h = this.timelineCanvas.height;
+    
+    ctx.fillStyle = '#0a0a14';
+    ctx.fillRect(0, 0, w, h);
+    
+    if (this.currentSceneIndex < 0 || !this.scenes[this.currentSceneIndex]) return;
+    
+    const scene = this.scenes[this.currentSceneIndex];
+    if (!scene.keyframes || scene.keyframes.length === 0) {
+      ctx.fillStyle = '#333';
+      ctx.font = '14px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('Keyframes hinzufügen zum Bearbeiten', w / 2, h / 2);
+      return;
+    }
+    
+    const duration = scene.duration || 10;
+    const padding = 40;
+    const usableWidth = w - padding * 2;
+    const pixelsPerSecond = usableWidth / Math.max(1, duration);
+    
+    // Time ruler
+    ctx.fillStyle = '#333';
+    ctx.font = '10px sans-serif';
+    ctx.textAlign = 'center';
+    
+    for (let t = 0; t <= duration; t++) {
+      const x = padding + t * pixelsPerSecond;
+      ctx.fillRect(x, h - 20, 1, 10);
+      ctx.fillText(`${t}s`, x, h - 5);
+    }
+    
+    // Scene background
+    const sceneY = 10;
+    const sceneH = 30;
+    ctx.fillStyle = '#1a1a3e';
+    ctx.fillRect(padding, sceneY, usableWidth, sceneH);
+    ctx.strokeStyle = '#7c6ff5';
+    ctx.strokeRect(padding, sceneY, usableWidth, sceneH);
+    
+    // Keyframes
+    scene.keyframes.forEach((kf, idx) => {
+      const x = padding + kf.time * pixelsPerSecond;
+      
+      // Color swatch
+      const colorHex = '#' + kf.colors[0].map(c => Math.min(255, c).toString(16).padStart(2, '0')).join('');
+      ctx.fillStyle = colorHex;
+      ctx.fillRect(x - 8, sceneY + 2, 16, sceneH - 4);
+      
+      // Diamond marker
+      ctx.fillStyle = '#fff';
+      ctx.beginPath();
+      ctx.moveTo(x, sceneY - 5);
+      ctx.lineTo(x + 6, sceneY + 10);
+      ctx.lineTo(x, sceneY + 25);
+      ctx.lineTo(x - 6, sceneY + 10);
+      ctx.closePath();
+      ctx.fill();
+      ctx.strokeStyle = '#7c6ff5';
+      ctx.stroke();
+      
+      // Time label
+      ctx.fillStyle = '#aaa';
+      ctx.font = '9px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(`${kf.time.toFixed(1)}s`, x, sceneY + sceneH + 14);
+    });
+    
+    // Playhead if playing
+    if (this.playing && this.currentSceneIndex >= 0) {
+      const playheadX = padding + this.elapsedTime * pixelsPerSecond;
+      ctx.strokeStyle = '#ff0';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(playheadX, 0);
+      ctx.lineTo(playheadX, h);
+      ctx.stroke();
+    }
+  }
+
+  // --- Color Picker ---
+  
+  bindEvents() {
+    const colorPicker = document.getElementById('emulator-color-picker');
+    const rSlider = document.getElementById('r-slider');
+    const gSlider = document.getElementById('g-slider');
+    const bSlider = document.getElementById('b-slider');
+    
+    colorPicker.addEventListener('input', (e) => this.onColorPick(e.target.value));
+    rSlider.addEventListener('input', () => this.syncColorFromSliders());
+    gSlider.addEventListener('input', () => this.syncColorFromSliders());
+    bSlider.addEventListener('input', () => this.syncColorFromSliders());
+  }
+
+  onColorPick(hex) {
+    const r = parseInt(hex.slice(1, 3), 16);
+    const g = parseInt(hex.slice(3, 5), 16);
+    const b = parseInt(hex.slice(5, 7), 16);
+    document.getElementById('r-slider').value = r;
+    document.getElementById('g-slider').value = g;
+    document.getElementById('b-slider').value = b;
+  }
+
+  syncColorFromSliders() {
+    const r = document.getElementById('r-slider').value;
+    const g = document.getElementById('g-slider').value;
+    const b = document.getElementById('b-slider').value;
+    const hex = '#' + [r, g, b].map(x => parseInt(x).toString(16).padStart(2, '0')).join('');
+    document.getElementById('emulator-color-picker').value = hex;
+  }
+
+  getCurrentColor() {
+    return [
+      parseInt(document.getElementById('r-slider').value),
+      parseInt(document.getElementById('g-slider').value),
+      parseInt(document.getElementById('b-slider').value)
+    ];
+  }
+
+  // --- Animation / Playback ---
+  
+  play() {
+    if (this.scenes.length === 0) {
+      this.addScene();
+    }
+    
+    if (this.activeEffect) {
+      this.playEffect();
+      return;
+    }
+    
+    if (this.currentSceneIndex < 0) return;
+    
+    this.playing = true;
+    this.startTime = Date.now();
+    this.elapsedTime = 0;
+    document.getElementById('sim-status').textContent = '● Abspielend';
+  }
+
+  stop() {
+    this.playing = false;
+    this.activeEffect = null;
+    document.getElementById('sim-status').textContent = '● Simuliert';
+    document.getElementById('effect-params-panel').style.display = 'none';
+  }
+
+  getFrameColors(scene, elapsed) {
+    const keyframes = scene.keyframes;
+    if (!keyframes || keyframes.length === 0) {
+      return new Array(this.numPixels).fill([0, 0, 0]);
+    }
+    
+    if (elapsed <= keyframes[0].time) {
+      return keyframes[0].colors.map(c => [...c]);
+    }
+    
+    if (elapsed >= keyframes[keyframes.length - 1].time) {
+      return keyframes[keyframes.length - 1].colors.map(c => [...c]);
+    }
+    
+    // Find surrounding keyframes
+    for (let i = 0; i < keyframes.length - 1; i++) {
+      if (keyframes[i].time <= elapsed && elapsed <= keyframes[i + 1].time) {
+        const dur = keyframes[i + 1].time - keyframes[i].time;
+        let t = (elapsed - keyframes[i].time) / Math.max(0.001, dur);
+        
+        // Apply interpolation
+        const interp = scene.interpolation || 'linear';
+        if (interp === 'sine') {
+          t = Math.sin(t * Math.PI / 2);
+        } else if (interp === 'step') {
+          t = t > 0.5 ? 1 : 0;
+        } else if (interp === 'ease_in_out') {
+          t = t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
+        }
+        
+        // Interpolate each pixel
+        return keyframes[i].colors.map((c1, j) => {
+          const c2 = keyframes[i + 1].colors[j] || [0, 0, 0];
+          return [
+            Math.round(c1[0] + (c2[0] - c1[0]) * t),
+            Math.round(c1[1] + (c2[1] - c1[1]) * t),
+            Math.round(c1[2] + (c2[2] - c1[2]) * t)
+          ];
+        });
+      }
+    }
+    
+    return keyframes[keyframes.length - 1].colors.map(c => [...c]);
+  }
+
+  // --- Effects ---
+  
+  renderEffectList() {
+    const container = document.getElementById('effect-list');
+    const effects = [
+      { id: 'strobe', name: 'Strobe', desc: 'Blitzlicht mit Frequenz & Farbe' },
+      { id: 'fire', name: 'Fire', desc: 'Feuer-/Flammeneffekt' },
+      { id: 'emergency_us', name: 'Emergency (US)', desc: 'Rot/Blau abwechselnd' },
+      { id: 'emergency_de', name: 'Blaulicht (DE)', desc: 'Deutsches Blaulicht' },
+      { id: 'rainbow', name: 'Rainbow', desc: 'Regenbogen-Welleneffekt' },
+      { id: 'breathing', name: 'Breathing', desc: 'Sanftes Ein/Ausfaden' }
+    ];
+    
+    container.innerHTML = '';
+    effects.forEach(effect => {
+      const div = document.createElement('div');
+      div.className = 'effect-item';
+      div.innerHTML = `
+        <div class="name">${effect.name}</div>
+        <div class="desc">${effect.desc}</div>
+      `;
+      div.onclick = () => this.selectEffect(effect.id);
+      container.appendChild(div);
+    });
+  }
+
+  selectEffect(effectId) {
+    this.activeEffect = effectId;
+    this.effectStartTime = Date.now();
+    
+    // Show params panel
+    const panel = document.getElementById('effect-params-panel');
+    panel.style.display = 'block';
+    const container = document.getElementById('effect-params');
+    container.innerHTML = '';
+    
+    // Add appropriate params based on effect type
+    if (['strobe', 'emergency_us', 'emergency_de', 'breathing'].includes(effectId)) {
+      this.addParamSlider(container, 'Frequency (Hz)', 'freq', 0.5, 10, 2.0, (v) => {
+        this.effectParams.freq = parseFloat(v);
+      });
+    }
+    
+    if (effectId === 'fire') {
+      this.addParamSlider(container, 'Intensity', 'intensity', 0.1, 1.0, 1.0, (v) => {
+        this.effectParams.intensity = parseFloat(v);
+      });
+    }
+    
+    if (['strobe', 'breathing'].includes(effectId)) {
+      const colorDiv = document.createElement('div');
+      colorDiv.className = 'param-row';
+      colorDiv.innerHTML = `
+        <label>Farbe:</label>
+        <input type="color" value="#ff0000" onchange="emulator.effectParams.color=[parseInt(this.value.slice(1,3),16),parseInt(this.value.slice(3,5),16),parseInt(this.value.slice(5,7),16)]">
+      `;
+      container.appendChild(colorDiv);
+    }
+    
+    // Add duration param
+    this.addParamSlider(container, 'Dauer (s)', 'duration', 1, 60, 10, (v) => {
+      this.effectParams.duration = parseInt(v);
+    });
+    
+    // Play button for effect
+    const playBtn = document.createElement('button');
+    playBtn.className = 'btn btn-success';
+    playBtn.style.width = '100%';
+    playBtn.style.marginTop = '8px';
+    playBtn.textContent = '▶ Effekt starten';
+    playBtn.onclick = () => this.playEffect();
+    container.appendChild(playBtn);
+    
+    // Highlight active effect
+    document.querySelectorAll('.effect-item').forEach((el, idx) => {
+      el.classList.toggle('active', effects[idx].id === effectId);
+    });
+  }
+
+  addParamSlider(container, label, name, min, max, defaultVal, onChange) {
+    const div = document.createElement('div');
+    div.className = 'param-row';
+    div.innerHTML = `
+      <label>${label}:</label>
+      <input type="range" min="${min}" max="${max}" step="${(max - min) / 100}" value="${defaultVal}" 
+             oninput="this.nextElementSibling.textContent=this.value;emulator.effectParams.${name}=parseFloat(this.value)">
+      <span class="value">${defaultVal}</span>
+    `;
+    container.appendChild(div);
+    this.effectParams[name] = defaultVal;
+  }
+
+  playEffect() {
+    if (!this.activeEffect) return;
+    
+    this.playing = true;
+    this.startTime = Date.now();
+    document.getElementById('sim-status').textContent = '● Effekt: ' + this.activeEffect;
+    
+    const duration = (this.effectParams.duration || 10) * 1000;
+    
+    const animate = () => {
+      if (!this.playing || !this.activeEffect) return;
+      
+      const elapsed = Date.now() - this.startTime;
+      if (elapsed >= duration) {
+        this.stop();
+        return;
+      }
+      
+      const t = elapsed / 1000;
+      const colors = new Array(this.numPixels).fill([0, 0, 0]);
+      
+      switch (this.activeEffect) {
+        case 'strobe': {
+          const freq = this.effectParams.freq || 2.0;
+          const color = this.effectParams.color || [255, 255, 255];
+          const phase = (t * freq) % 2;
+          const c = phase < 1 ? color : [0, 0, 0];
+          colors.fill([...c]);
+          break;
+        }
+        case 'fire': {
+          const intensity = this.effectParams.intensity || 1.0;
+          for (let i = 0; i < this.numPixels; i++) {
+            const r = Math.min(255, Math.round(255 * intensity * (0.7 + 0.3 * Math.sin(i * 0.5 + t * 3))));
+            const g = Math.min(255, Math.round(180 * intensity * Math.max(0, 0.4 + 0.6 * Math.sin(i * 0.3 + t * 2.5))));
+            colors[i] = [r, g, 0];
+          }
+          break;
+        }
+        case 'emergency_us': {
+          const freq = this.effectParams.freq || 2.0;
+          const colorRed = [255, 0, 0];
+          const colorBlue = [0, 0, 255];
+          const phase = (t * freq) % 2;
+          colors.fill(phase < 1 ? [...colorRed] : [...colorBlue]);
+          break;
+        }
+        case 'emergency_de': {
+          const freq = this.effectParams.freq || 1.5;
+          const colorBlue = [0, 0, 255];
+          const phase = (t * freq) % 4;
+          let c = [0, 0, 0];
+          if (phase < 0.5) c = [...colorBlue];
+          else if (phase < 1.0) c = [0, 0, 0];
+          else if (phase < 2.0) c = Math.floor(t * 10) % 2 === 0 ? [...colorBlue] : [0, 0, 0];
+          colors.fill(c);
+          break;
+        }
+        case 'rainbow': {
+          const speed = this.effectParams.speed || 1.0;
+          for (let i = 0; i < this.numPixels; i++) {
+            const hue = ((i * 360 / this.numPixels) + t * 50 * speed) % 360;
+            colors[i] = this.hsvToRgb(hue, 255, 255);
+          }
+          break;
+        }
+        case 'breathing': {
+          const freq = this.effectParams.freq || 0.5;
+          const color = this.effectParams.color || [255, 255, 255];
+          let bt = (t * freq) % 2;
+          if (bt > 1) bt = 2 - bt;
+          const brightness = Math.round(255 * Math.pow(Math.sin(bt * Math.PI / 2), 2));
+          colors.fill([
+            Math.round(color[0] * brightness / 255),
+            Math.round(color[1] * brightness / 255),
+            Math.round(color[2] * brightness / 255)
+          ]);
+          break;
+        }
+      }
+      
+      // Apply brightness
+      const b = this.brightness / 100;
+      this.pixels = colors.map(c => [
+        Math.round(c[0] * b),
+        Math.round(c[1] * b),
+        Math.round(c[2] * b)
+      ]);
+      
+      this.updatePixelPreview();
+      this.renderZoneColors();
+      
+      requestAnimationFrame(animate);
+    };
+    
+    animate();
+  }
+
+  hsvToRgb(h, s, v) {
+    const sNorm = s / 255;
+    const vNorm = v / 255;
+    const c = vNorm * sNorm;
+    const x = c * (1 - Math.abs((h / 60) % 2 - 1));
+    const m = vNorm - c;
+    
+    let r, g, b;
+    if (h < 60) [r, g, b] = [c, x, 0];
+    else if (h < 120) [r, g, b] = [x, c, 0];
+    else if (h < 180) [r, g, b] = [0, c, x];
+    else if (h < 240) [r, g, b] = [0, x, c];
+    else if (h < 300) [r, g, b] = [x, 0, c];
+    else [r, g, b] = [c, 0, x];
+    
+    return [
+      Math.round((r + m) * 255),
+      Math.round((g + m) * 255),
+      Math.round((b + m) * 255)
+    ];
+  }
+
+  // --- Settings ---
+  
+  setNumPixels(value) {
+    this.numPixels = Math.max(1, Math.min(256, parseInt(value)));
+    this.pixels = new Array(this.numPixels).fill([0, 0, 0]);
+    document.getElementById('pixel-count').textContent = `Pixels: ${this.numPixels}`;
+    this.initPixelPreview();
+    
+    // Update zones
+    if (this.zones.length > 0) {
+      this.zones[0].end = this.numPixels - 1;
+      this.renderZoneControls();
+    }
+  }
+
+  setBrightness(value) {
+    this.brightness = parseInt(value);
+  }
+
+  setInterpolation(value) {
+    this.interpolation = value;
+    if (this.currentSceneIndex >= 0 && this.scenes[this.currentSceneIndex]) {
+      this.scenes[this.currentSceneIndex].interpolation = value;
+    }
+  }
+
+  // --- Save/Load Shows ---
+  
+  saveShow() {
+    if (this.scenes.length === 0) return;
+    
+    const show = {
+      id: 'show_' + Date.now(),
+      name: 'Show ' + (this.shows.length + 1),
+      scenes: this.scenes.map(s => ({...s}))
+    };
+    
+    this.shows.push(show);
+    this.renderShowsList();
+    
+    // Save to localStorage
+    localStorage.setItem('neopulse_shows', JSON.stringify(this.shows));
+    alert(`Show "${show.name}" gespeichert! (${this.scenes.length} Szenen)`);
+  }
+
+  loadShows() {
+    const saved = localStorage.getItem('neopulse_shows');
+    if (saved) {
+      try {
+        this.shows = JSON.parse(saved);
+        this.renderShowsList();
+      } catch (e) {
+        console.error('Failed to load shows:', e);
+      }
+    }
+  }
+
+  renderShowsList() {
+    const container = document.getElementById('shows-list');
+    container.innerHTML = '';
+    
+    this.shows.forEach((show, idx) => {
+      const div = document.createElement('div');
+      div.className = 'show-item';
+      div.innerHTML = `
+        <span class="name">${show.name} (${show.scenes.length} Szenen)</span>
+        <button onclick="emulator.loadShow(${idx})" title="Laden">▶</button>
+        <button onclick="emulator.deleteShow(${idx})" title="Löschen">✕</button>
+      `;
+      container.appendChild(div);
+    });
+  }
+
+  loadShow(idx) {
+    const show = this.shows[idx];
+    if (!show) return;
+    
+    this.scenes = show.scenes.map(s => ({...s}));
+    this.currentSceneIndex = 0;
+    this.renderSceneList();
+    this.renderKeyframeList();
+    this.drawTimeline();
+  }
+
+  deleteShow(idx) {
+    if (confirm('Show wirklich löschen?')) {
+      this.shows.splice(idx, 1);
+      localStorage.setItem('neopulse_shows', JSON.stringify(this.shows));
+      this.renderShowsList();
+    }
+  }
+
+  // --- Render Loop ---
+  
+  startRenderLoop() {
+    const loop = () => {
+      // FPS counter
+      this.frameCount++;
+      const now = Date.now();
+      if (now - this.lastFpsTime >= 1000) {
+        this.currentFps = this.frameCount;
+        this.frameCount = 0;
+        this.lastFpsTime = now;
+        document.getElementById('fps-counter').textContent = `FPS: ${this.currentFps}`;
+      }
+      
+      // Update elapsed time if playing scene
+      if (this.playing && !this.activeEffect && this.currentSceneIndex >= 0) {
+        this.elapsedTime = (Date.now() - this.startTime) / 1000;
+        const scene = this.scenes[this.currentSceneIndex];
+        
+        // Loop handling
+        let displayTime = this.elapsedTime;
+        if (scene.loop_mode === 'endless') {
+          displayTime = displayTime % scene.duration;
+        } else if (scene.loop_mode === 'pingpong') {
+          const cycle = displayTime % (scene.duration * 2);
+          displayTime = cycle > scene.duration ? scene.duration - (cycle - scene.duration) : cycle;
+        }
+        
+        // Get colors
+        this.pixels = this.getFrameColors(scene, displayTime);
+        
+        // Apply brightness
+        const b = this.brightness / 100;
+        this.pixels = this.pixels.map(c => [
+          Math.round(c[0] * b),
+          Math.round(c[1] * b),
+          Math.round(c[2] * b)
+        ]);
+        
+        this.updatePixelPreview();
+        this.renderZoneColors();
+        this.drawTimeline();
+      }
+      
+      requestAnimationFrame(loop);
+    };
+    
+    loop();
+  }
+}
+
+// Initialize emulator when page loads
+let emulator;
+window.addEventListener('DOMContentLoaded', () => {
+  emulator = new NeoPulseEmulator();
+});
+</script>
+</body>
+</html>

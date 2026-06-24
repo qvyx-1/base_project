@@ -1,0 +1,260 @@
+/* NeoPulse Web Interface Styles */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  background: #0a0a1a;
+  color: #e0e0e0;
+  min-height: 100vh;
+}
+
+.app { max-width: 1200px; margin: 0 auto; padding: 16px; }
+
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 20px;
+  background: #12122a;
+  border-radius: 12px;
+  margin-bottom: 16px;
+}
+
+header h1 { font-size: 1.5em; color: #7c6ff5; }
+
+.status-bar span {
+  margin-left: 16px;
+  font-size: 0.85em;
+  padding: 4px 10px;
+  background: #1a1a3e;
+  border-radius: 6px;
+}
+
+/* Pixel Preview */
+.preview-section {
+  background: #12122a;
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 16px;
+}
+
+.pixel-preview {
+  display: flex;
+  gap: 2px;
+  padding: 12px;
+  background: #0a0a14;
+  border-radius: 8px;
+  min-height: 50px;
+  align-items: center;
+}
+
+.pixel-preview .pixel {
+  width: 16px;
+  height: 16px;
+  border-radius: 3px;
+  background: #000;
+  flex-shrink: 0;
+}
+
+.brightness-control {
+  margin-top: 12px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.brightness-control input[type="range"] {
+  flex: 1;
+  accent-color: #7c6ff5;
+}
+
+/* Editor */
+.editor-section {
+  background: #12122a;
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 16px;
+}
+
+.editor-toolbar {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.editor-toolbar button, .editor-toolbar select {
+  padding: 8px 14px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.85em;
+}
+
+.editor-toolbar button {
+  background: #7c6ff5;
+  color: white;
+  transition: background 0.2s;
+}
+
+.editor-toolbar button:hover { background: #6a5be0; }
+
+.editor-toolbar select {
+  background: #1a1a3e;
+  color: #e0e0e0;
+  border: 1px solid #2a2a4e;
+}
+
+#btn-play { background: #4caf50 !important; }
+#btn-stop { background: #f44336 !important; }
+
+/* Timeline */
+.timeline-container {
+  background: #0a0a14;
+  border-radius: 8px;
+  padding: 8px;
+  margin-bottom: 12px;
+}
+
+#timeline-canvas {
+  width: 100%;
+  height: 120px;
+  display: block;
+}
+
+/* Color Picker */
+.color-section {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+#color-picker {
+  width: 60px;
+  height: 40px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.rgb-sliders {
+  display: flex;
+  gap: 12px;
+  flex: 1;
+}
+
+.rgb-sliders label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.85em;
+}
+
+.rgb-sliders input[type="range"] { width: 100px; accent-color: #7c6ff5; }
+
+/* Keyframe List */
+.keyframe-list { margin-top: 12px; }
+.keyframe-list h3 { font-size: 0.95em; color: #888; margin-bottom: 8px; }
+
+#keyframe-ul {
+  list-style: none;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.keyframe-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  background: #1a1a3e;
+  border-radius: 6px;
+  font-size: 0.85em;
+}
+
+.keyframe-item .color-swatch {
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  border: 1px solid #333;
+}
+
+.keyframe-item button {
+  background: none;
+  border: none;
+  color: #f44336;
+  cursor: pointer;
+  font-size: 1.1em;
+}
+
+/* Shows List */
+.shows-section {
+  background: #12122a;
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 16px;
+}
+
+.shows-list {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.show-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  background: #1a1a3e;
+  border-radius: 8px;
+  font-size: 0.9em;
+}
+
+.show-item button {
+  padding: 4px 8px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.8em;
+}
+
+.show-item .play-btn { background: #4caf50; color: white; }
+.show-item .delete-btn { background: #f44336; color: white; }
+
+/* Params */
+.params-section {
+  background: #12122a;
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 16px;
+}
+
+.param-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.param-row label { min-width: 100px; font-size: 0.9em; }
+.param-row input { flex: 1; accent-color: #7c6ff5; }
+
+/* Footer */
+footer {
+  text-align: center;
+  padding: 12px;
+  color: #555;
+  font-size: 0.8em;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  header { flex-direction: column; gap: 8px; }
+  .editor-toolbar { flex-direction: column; }
+  .rgb-sliders { flex-direction: column; }
+}
