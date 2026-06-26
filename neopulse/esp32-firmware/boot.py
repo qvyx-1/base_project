@@ -1,24 +1,28 @@
-# boot.py -- Auto-Boot: CPU-Freq setzen, dann Server starten
-# Ctrl+C im Server -> REPL verfuegbar
-# Fehler -> Traceback anzeigen, KEIN machine.reset()
+# boot.py -- Nur GPIO 0 Polling + /noboot, dann ENDEN
+# ====================================================
+# WICHTIG: boot.py muss ENDEN. MicroPython startet dann main.py.
+# main.py prueft /noboot und startet Server ODER laesst REPL frei.
 import time
 
 import machine
 
 machine.freq(240000000)
 
-# USB-Enumeration abwarten: ohne Pause faellt USB-JTAG beim Start aus
-# (Linux: "can't set config #1, error -32")
-time.sleep(10)
+print("NeoPulse v1.0 | BOOT fuer REPL-Modus (5s)...")
 
-try:
-    import main
+_pin = machine.Pin(0, machine.Pin.IN, machine.Pin.PULL_UP)
+_boot = False
+for _ in range(50):
+    time.sleep_ms(100)
+    if not _pin.value():
+        _boot = True
+        break
 
-    main.boot()
-except KeyboardInterrupt:
-    print("Boot interrupted -- REPL available")
-except Exception as e:
-    import sys
-
-    sys.print_exception(e)
-    print("Boot error above -- REPL available (not resetting)")
+if _boot:
+    open("/noboot", "w").close()
+    print("NeoPulse v1.0 | REPL-Modus (/noboot)")
+    print("  Server: import main; main.boot()")
+else:
+    print("NeoPulse v1.0 | Server startet...")
+    # KEIN import main.main.boot() HIER!
+    # boot.py endet -> MicroPython startet main.py -> main.py bootet Server

@@ -1,14 +1,13 @@
 """Upload firmware to ESP32-S3.
 
 Strategy:
-- mpremote 'resume' verhindert den soft-reset nach connect.
-  Das ist nötig weil boot.py jetzt main.boot() startet, was den REPL blockiert.
-- Ctrl+C wird vor jedem mpremote-Aufruf gesendet um laufenden Server zu stoppen.
-- Am Ende: manueller soft-reset aktiviert das neue boot.py.
+- boot.py wartet 5 Sekunden bevor IRQ aktiv wird.
+- In diesen 5 Sekunden muessen alle Dateien hochgeladen sein.
+- mpremote 'resume' verhindert soft-reset.
+- Ctrl+C vor jedem Aufruf stoppt laufenden Server.
 """
 
 import os
-import sys
 import time
 
 import serial
@@ -18,14 +17,14 @@ PORT = "/dev/ttyACM0"
 
 
 def _interrupt():
-    """Ctrl+C senden: unterbricht laufenden Server, bringt REPL zurück."""
+    """Ctrl+C senden: unterbricht laufenden Server."""
     try:
         s = serial.Serial(PORT, 115200, timeout=0.5)
         for _ in range(4):
             s.write(b"\x03")
             time.sleep(0.1)
         time.sleep(0.5)
-        s.read(2000)  # drain
+        s.read(2000)
         s.close()
         time.sleep(0.3)
     except Exception as e:
@@ -33,9 +32,8 @@ def _interrupt():
 
 
 def mp(cmd):
-    """Einmalig Ctrl+C, dann mpremote mit 'resume' (KEIN soft-reset)."""
+    """Einmalig Ctrl+C, dann mpremote mit 'resume'."""
     _interrupt()
-    # 'resume' = kein Ctrl+D soft-reset, REPL bleibt wie er ist
     rc = os.system(f"mpremote connect {PORT} resume {cmd}")
     return rc == 0
 
@@ -48,16 +46,16 @@ def cp(local, remote):
     return ok
 
 
-# -- Interrupt + REPL-Check ------------------------------------------------
+# -- Schnell-Check: REPL erreichbar? ---------------------------------------
 print("Interrupting ESP32...")
 _interrupt()
 
-print("Checking REPL...")
+print("Checking REPL (5s Window)...")
 ok = mp("exec \"print('REPL OK')\"")
 if not ok:
-    print("ERROR: REPL not accessible.")
-    print("Try:  esptool --port /dev/ttyACM0 run")
-    sys.exit(1)
+    print("WARN: REPL nicht sofort erreichbar.")
+    print("  boot.py wartet 5 Sekunden. Upload wird trotzdem versucht...")
+    time.sleep(1)  # Kurz warten bis boot.py die 5s-Wartezeit beendet hat
 
 # -- Directories (resume: kein soft-reset) ----------------------------------
 print("\n=== Directories ===")
