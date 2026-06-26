@@ -12,17 +12,15 @@ DEFAULT_CONFIG = {
         "ap_password": "neopulse123",
     },
     "neopixel": {
-        "pin": 21,       # GPIO pin for NeoPixel data
+        "pin": 21,  # GPIO pin for NeoPixel data
         "num_pixels": 64,  # Max 256
-        "bpp": 3,         # 3=RGB, 4=RGBW
-        "timing": 1,      # 1=800kHz, 0=400kHz
+        "bpp": 3,  # 3=RGB, 4=RGBW
+        "timing": 1,  # 1=800kHz, 0=400kHz
     },
-    "zones": [
-        {"id": 0, "start": 0, "end": 63, "name": "Zone 1"}
-    ],
+    "zones": [{"id": 0, "start": 0, "end": 63, "name": "Zone 1"}],
     "web": {
-        "port": 80,
-        "password": "",   # Empty = no auth
+        "port": 8080,
+        "password": "",  # Empty = no auth
     },
     "brightness": 100,  # 0-100%
 }
@@ -88,6 +86,7 @@ def update_config(updates):
 def gc_free():
     """Get free memory in bytes."""
     import gc
+
     gc.collect()
     return gc.mem_free()
 
@@ -114,6 +113,7 @@ def get_system_info():
 def get_wifi_status():
     """Get current WiFi status."""
     import network
+
     result = {}
     sta = network.WLAN(network.STA_IF)
     ap = network.WLAN(network.AP_IF)
@@ -136,6 +136,7 @@ def _get_uptime_ms():
     """Get uptime in milliseconds."""
     try:
         import time
+
         return int(time.time() * 1000)
     except ImportError:
         return 0

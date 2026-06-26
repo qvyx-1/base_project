@@ -1,82 +1,77 @@
-# main.py -- Entry point for NeoPulse ESP32 firmware
-# Safe boot: starts WiFi, config, and HTTP server
-# Falls back gracefully if anything fails - NEVER blocks REPL permanently
-
+# main.py -- NeoPulse boot sequence
+# Usage: import main; main.boot()
+# Ctrl+C stops the server, REPL stays alive
 import time
+
 import network
-import machine
+
 
 def boot():
-    """Initialize NeoPulse system. Returns when WiFi+Server are ready."""
+    print("=" * 40)
+    print("NeoPulse ESP32-S3 v1.0")
+    print("=" * 40)
+
+    # 1. Config
+    from config import get_config
+
+    cfg = get_config()
+    print("Config OK, pin:", cfg["neopixel"]["pin"])
+
+    # 2. WiFi -- STA first, AP always as fallback
+    _setup_wifi(cfg)
+
+    # 3. NeoPixel driver
+    from neopixel_driver import NeoPixelDriver
+
+    driver = NeoPixelDriver(cfg["neopixel"]["pin"], cfg["neopixel"]["num_pixels"])
+    driver.fill((0, 10, 0))  # dim green = booting
+    driver.write()
+    print("NeoPixel ready:", driver.num_pixels, "LEDs")
+
+    # 4. HTTP server (blocking, Ctrl+C stops it)
+    from server import run_server
+
     try:
-        print("=" * 40)
-        print("NeoPulse ESP32-S3 v1.0")
-        print("=" * 40)
+        run_server(driver)
+    except KeyboardInterrupt:
+        print("Server stopped via Ctrl+C -- REPL available")
+        driver.fill((0, 0, 0))
+        driver.write()
+    except Exception as e:
+        print("Server error:", e)
+        import sys
 
-        # 1. Config laden
-        from config import get_config
-        cfg = get_config()
-        wifi_cfg = cfg['wifi']
-        print("Config loaded, pin:", cfg['neopixel']['pin'])
+        sys.print_exception(e)
 
-        # 2. WiFi STA (Client) - nicht blockierend
+
+def _setup_wifi(cfg):
+    wifi_cfg = cfg.get("wifi", {})
+    ssid = wifi_cfg.get("ssid", "")
+    pw = wifi_cfg.get("password", "")
+
+    # Always enable AP as fallback
+    ap = network.WLAN(network.AP_IF)
+    ap.active(True)
+    ap_ssid = wifi_cfg.get("ap_ssid", "NeoPulse-ESP32")
+    ap_pw = wifi_cfg.get("ap_password", "")
+    if ap_pw:
+        ap.config(essid=ap_ssid, password=ap_pw, authmode=3)
+    else:
+        ap.config(essid=ap_ssid)
+    print("AP:", ap_ssid, "-->", ap.ifconfig()[0])
+
+    # Try STA
+    if ssid:
         sta = network.WLAN(network.STA_IF)
         sta.active(True)
-
-        ssid = wifi_cfg.get('ssid', '')
-        password = wifi_cfg.get('password', '')
-
-        if ssid and password:
-            print("Connecting to:", ssid)
-            sta.connect(ssid, password)
-            for i in range(30):
+        if not sta.isconnected():
+            print("WiFi STA connecting:", ssid)
+            sta.connect(ssid, pw)
+            for _ in range(20):
                 if sta.isconnected():
                     break
                 time.sleep_ms(500)
-            if sta.isconnected():
-                print("STA mode:", sta.ifconfig()[0])
-            else:
-                print("STA failed, using AP")
-                sta.active(False)
+        if sta.isconnected():
+            print("WiFi STA:", sta.ifconfig()[0])
         else:
-            print("No WiFi credentials, starting AP...")
-            sta.active(False)
-
-        # 3. AP Fallback falls STA nicht verbunden
-        ap = network.WLAN(network.AP_IF)
-        if not sta.isconnected():
-            ap.active(True)
-            ap.config(essid=wifi_cfg.get('ap_ssid', 'NeoPulse-ESP32'))
-            pw = wifi_cfg.get('ap_password', 'neopulse123')
-            if pw: ap.config(password=pw)
-            print("AP mode:", wifi_cfg.get('ap_ssid', 'NeoPulse-ESP32'), "IP:", ap.ifconfig()[0])
-
-        # 4. NeoPixel und Server-Initialisierung
-        from server import init_global_state
-        init_global_state()
-        print("NeoPixel + Server initialized")
-
-        # 5. Server starten
-        import asyncio
-        from server import _run_server
-
-        loop = asyncio.get_event_loop()
-        loop.create_task(_run_server(8080))
-        print("\nServer on port 8080")
-
-        # Zusammenfassung
-        sta_ip = sta.ifconfig()[0] if sta.isconnected() else "-"
-        ap_ip = ap.ifconfig()[0] if ap.active() else "-"
-        print("\n=== NEOBPULSE READY ===")
-        print("STA IP:", sta_ip)
-        print("AP IP: ", ap_ip)
-        print("WebUI:", "http://" + (sta_ip if sta.isconnected() else ap_ip) + ":8080")
-        print("=" * 40)
-
-        # Loop starten (blockiert, aber das ist gewollt)
-        loop.run_forever()
-
-    except Exception as e:
-        print("\nXXX Boot error:", e, "XXX")
-        print("REPL fallback - system still usable")
-        # Driver global halten für manuelle Nutzung
+            print("WiFi STA: failed, AP only")
